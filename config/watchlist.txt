@@ -1,0 +1,3 @@
+# Extra NSE symbols to ALWAYS include (one per line, without .NS), e.g.:
+# IRFC
+# ZOMATO

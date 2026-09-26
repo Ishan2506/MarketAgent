@@ -1,0 +1,4 @@
+# BSE-only companies to include (one per line). Use the BSE scrip code
+# or Yahoo BSE ticker, e.g.:
+# 500325        (Reliance on BSE)
+# 543320.BO

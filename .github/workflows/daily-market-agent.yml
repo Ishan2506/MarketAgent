@@ -1,0 +1,70 @@
+name: Daily Market Prediction Agent
+
+on:
+  schedule:
+    # 15:00 UTC = 8:30 PM IST, Monday to Friday (NSE/BSE trading days).
+    # GitHub may start scheduled jobs a few minutes late at busy times.
+    - cron: "0 15 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      universe:
+        description: "Stocks to analyse"
+        type: choice
+        options: [NIFTY500, NIFTY200, NIFTY100, NIFTY50, NSE_ALL]
+        default: NIFTY500
+      force:
+        description: "Rebuild even if today's report already exists"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: market-agent
+  cancel-in-progress: false
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      UNIVERSE: ${{ inputs.universe || vars.UNIVERSE || 'NIFTY500' }}
+      TZ: Asia/Kolkata
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run market agent
+        run: python -m market_agent.main --universe "$UNIVERSE" ${{ inputs.force && '--force' || '' }}
+
+      - name: Commit Excel report to repository
+        run: |
+          git config user.name  "market-agent-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports data
+          if git diff --cached --quiet; then
+            echo "No new report to commit"; exit 0
+          fi
+          git commit -m "Market prediction report $(date +%Y-%m-%d)"
+          for i in 1 2 3 4; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i * 5))
+          done
+          exit 1
+
+      - name: Upload report as workflow artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-prediction-report
+          path: reports/Latest_Market_Prediction.xlsx
+          if-no-files-found: ignore
+          retention-days: 30
