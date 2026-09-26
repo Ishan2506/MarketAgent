@@ -1,6 +1,6 @@
 # MarketAgent: NSE/BSE 1-2 week price direction predictor
 
-A GitHub Actions agent that runs **every trading day at 8:30 PM IST**. It checks
+A GitHub Actions agent that runs **every day at 8:30 PM IST**. It checks
 every company in the NIFTY 500 (or all NSE stocks) and predicts whether each
 share price will be **higher or lower in 7 trading days (~10 calendar days)**.
 It then commits a formatted **Excel report** to this repository.
