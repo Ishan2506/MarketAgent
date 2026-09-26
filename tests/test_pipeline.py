@@ -36,3 +36,30 @@ def test_zero_volume_day_and_missing_last_candle_keep_stock():
     today, _, _ = train_and_predict(panel, 7, nifty.index.max())
     assert set(prices) == set(today["ticker"])
     assert today.set_index("ticker")["turnover_cr"].notna().all()
+
+
+def test_email_contains_summary_and_attachment(monkeypatch):
+    from unittest import mock
+
+    from market_agent import notify
+    report = main.config.ROOT / "reports" / "Latest_Market_Prediction.xlsx"
+    monkeypatch.setenv("MAIL_TO", "me@example.com")
+    monkeypatch.setenv("SMTP_USERNAME", "bot@example.com")
+    monkeypatch.setenv("SMTP_PASSWORD", "secret")
+    with mock.patch("smtplib.SMTP_SSL") as smtp:
+        assert notify.send(report) == 0
+    server = smtp.return_value.__enter__.return_value
+    server.login.assert_called_once_with("bot@example.com", "secret")
+    msg = server.send_message.call_args[0][0]
+    assert msg["To"] == "me@example.com" and msg["Subject"].startswith("Market Prediction Report")
+    parts = list(msg.iter_attachments())
+    assert parts and parts[0].get_filename().endswith(".xlsx")
+    html_body = msg.get_body(("html",)).get_content()
+    assert "Top 10 likely to go UP" in html_body
+
+
+def test_email_skipped_without_secrets(monkeypatch):
+    from market_agent import notify
+    for k in ("MAIL_TO", "SMTP_USERNAME", "SMTP_PASSWORD"):
+        monkeypatch.delenv(k, raising=False)
+    assert notify.send() == 2

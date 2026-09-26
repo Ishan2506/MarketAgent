@@ -77,6 +77,26 @@ Illiquid stocks (average turnover below ₹1 crore) and penny stocks (price belo
    `UNIVERSE` = `NIFTY50`, `NIFTY100`, `NIFTY200`, `NIFTY500` (default) or `NSE_ALL`.
 4. To run it immediately: **Actions → Weekly Market Prediction Agent → Run workflow**.
 
+### Email the report every week (optional)
+
+After each run the agent emails you a summary (market mood, top 10 UP / DOWN
+stocks) with the full Excel attached. Your email details are stored as
+**encrypted GitHub secrets**, never in the code. That matters because this repo is public.
+
+1. Turn on 2-Step Verification for your Google account, then create an **App Password** at
+   https://myaccount.google.com/apppasswords (the name can be anything, e.g. "MarketAgent").
+   Google shows a 16-character password.
+2. In the repo go to **Settings → Secrets and variables → Actions → New repository secret** and add:
+
+| Secret | Value |
+|---|---|
+| `MAIL_TO` | the address that should receive the report (comma-separate several) |
+| `SMTP_USERNAME` | the Gmail address that sends it |
+| `SMTP_PASSWORD` | the 16-character App Password from step 1 |
+
+For a non-Gmail provider, also add `SMTP_SERVER` and `SMTP_PORT` (465 = SSL, 587 = STARTTLS).
+If the secrets are missing, the run still succeeds and only shows a warning.
+
 Extra stocks can be added in `config/watchlist.txt` (NSE) and
 `config/bse_symbols.txt` (BSE-only companies, by scrip code).
 

@@ -60,6 +60,22 @@ jobs:
           done
           exit 1
 
+      - name: Email the report
+        env:
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          REPORT_URL: ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/reports/Latest_Market_Prediction.xlsx
+        run: |
+          python -m market_agent.notify || code=$?
+          if [ "${code:-0}" = "2" ]; then
+            echo "::warning::Email not sent - add MAIL_TO, SMTP_USERNAME and SMTP_PASSWORD in Settings > Secrets and variables > Actions"
+          elif [ "${code:-0}" != "0" ]; then
+            exit "$code"
+          fi
+
       - name: Upload report as workflow artifact
         if: always()
         uses: actions/upload-artifact@v4
