@@ -1,11 +1,10 @@
-name: Daily Market Prediction Agent
+name: Weekly Market Prediction Agent
 
 on:
   schedule:
-    # 15:00 UTC = 8:30 PM IST, every day. On weekends/holidays the latest
-    # trading day's report already exists, so the run exits without changes.
+    # 02:30 UTC = 8:00 AM IST, every Tuesday (uses Monday's closing data).
     # GitHub may start scheduled jobs a few minutes late at busy times.
-    - cron: "0 15 * * *"
+    - cron: "30 2 * * 2"
   workflow_dispatch:
     inputs:
       universe:

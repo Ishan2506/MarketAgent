@@ -1,6 +1,6 @@
 # MarketAgent: NSE/BSE 1-2 week price direction predictor
 
-A GitHub Actions agent that runs **every day at 8:30 PM IST**. It checks
+A GitHub Actions agent that runs **every Tuesday at 8:00 AM IST** (using Monday's closing prices). It checks
 every company in the NIFTY 500 (or all NSE stocks) and predicts whether each
 share price will be **higher or lower in 7 trading days (~10 calendar days)**.
 It then commits a formatted **Excel report** to this repository.
@@ -14,7 +14,7 @@ It then commits a formatted **Excel report** to this repository.
 | File | What it is |
 |---|---|
 | `reports/Latest_Market_Prediction.xlsx` | Always the newest report |
-| `reports/YYYY/MM/Market_Prediction_YYYY-MM-DD.xlsx` | Daily archive |
+| `reports/YYYY/MM/Market_Prediction_YYYY-MM-DD.xlsx` | Weekly archive (dated by the last trading day) |
 | `data/prediction_history.csv` | Every past prediction and how it turned out |
 | `data/fundamentals.csv` | Cached fundamentals (refreshed weekly) |
 
@@ -75,7 +75,7 @@ Illiquid stocks (average turnover below ₹1 crore) and penny stocks (price belo
    **Read and write permissions**. The agent needs this to commit the Excel.
 3. Optional: under **Settings → Secrets and variables → Actions → Variables**, add
    `UNIVERSE` = `NIFTY50`, `NIFTY100`, `NIFTY200`, `NIFTY500` (default) or `NSE_ALL`.
-4. To run it immediately: **Actions → Daily Market Prediction Agent → Run workflow**.
+4. To run it immediately: **Actions → Weekly Market Prediction Agent → Run workflow**.
 
 Extra stocks can be added in `config/watchlist.txt` (NSE) and
 `config/bse_symbols.txt` (BSE-only companies, by scrip code).
