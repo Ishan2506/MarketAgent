@@ -78,7 +78,15 @@ def train_and_predict(panel, horizon, predict_date):
     clf = _classifier().fit(train_rows[MODEL_FEATURES], train_rows["y"])
     reg = _regressor().fit(train_rows[MODEL_FEATURES], train_rows["fwd_ret"].clip(-0.3, 0.3))
 
-    today = panel[panel["date"] == predict_date].copy()
+    # Latest row per stock; allow a few sessions of lag because Yahoo
+    # sometimes publishes a stock's last candle late.
+    days = np.sort(panel.loc[panel["date"] <= predict_date, "date"].unique())
+    recent = panel[(panel["date"] >= days[-3]) & (panel["date"] <= predict_date)]
+    today = recent.sort_values("date").groupby("ticker").tail(1).copy()
+    stale = (today["date"] < predict_date).sum()
+    if stale:
+        log.warning("%d stocks have no candle for %s; using their previous session", stale,
+                    pd.Timestamp(predict_date).date())
     today["ml_prob_up"] = clf.predict_proba(today[MODEL_FEATURES])[:, 1]
     today["ml_expected_ret"] = reg.predict(today[MODEL_FEATURES])
     return today, metrics, importance

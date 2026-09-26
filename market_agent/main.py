@@ -87,8 +87,13 @@ def run(universe_name, force=False, demo=False):
     today = today.merge(delivery, left_on="symbol", right_index=True, how="left")
 
     # Drop illiquid / penny stocks that are hard to trade
-    liquid = (today["turnover_cr"] >= config.MIN_AVG_TURNOVER_CR) & (today["close"] >= config.MIN_PRICE)
-    log.info("Excluding %d illiquid/penny stocks", int((~liquid).sum()))
+    # Unknown turnover is not evidence of illiquidity, so only a known low value excludes
+    low_turnover = today["turnover_cr"] < config.MIN_AVG_TURNOVER_CR
+    penny = today["close"] < config.MIN_PRICE
+    liquid = ~(low_turnover | penny)
+    log.info("Predicting %d stocks; excluding %d low-turnover and %d penny stocks (%d with unknown turnover kept)",
+             int(liquid.sum()), int(low_turnover.sum()), int((penny & ~low_turnover).sum()),
+             int(today["turnover_cr"].isna().sum()))
     today = today[liquid | demo].copy()
 
     today = apply_scores(today, horizon, config.ML_WEIGHT, as_of)

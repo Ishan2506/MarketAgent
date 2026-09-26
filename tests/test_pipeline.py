@@ -23,3 +23,16 @@ def test_tracker_marks_correct_calls():
     assert out.loc[0, "correct"] == 1 and out.loc[1, "correct"] == 0
     assert np.isnan(out.loc[2, "actual_ret"])  # horizon not reached yet
     assert abs(out.loc[0, "actual_ret"] - 0.07) < 1e-9
+
+
+def test_zero_volume_day_and_missing_last_candle_keep_stock():
+    from market_agent.indicators import build_panel
+    from market_agent.model import train_and_predict
+    uni, prices, nifty, vix, _ = main._demo_prices(n=40)
+    t0, t1 = list(prices)[:2]
+    prices[t0].iloc[-5, prices[t0].columns.get_loc("Volume")] = 0   # data gap
+    prices[t1] = prices[t1].iloc[:-1]                              # no candle on the last day
+    panel = build_panel(prices, nifty, vix, horizon=7)
+    today, _, _ = train_and_predict(panel, 7, nifty.index.max())
+    assert set(prices) == set(today["ticker"])
+    assert today.set_index("ticker")["turnover_cr"].notna().all()

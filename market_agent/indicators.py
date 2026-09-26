@@ -101,17 +101,17 @@ def stock_features(df):
     f["atr_pct"] = atr / c
     f["volatility_20"] = ret.rolling(20).std()
 
-    avg_v20 = v.rolling(20).mean()
+    avg_v20 = v.rolling(20, min_periods=10).mean()  # tolerate zero-volume data gaps
     f["vol_surge"] = v / avg_v20
-    f["vol_ratio_5_20"] = v.rolling(5).mean() / avg_v20
-    f["turnover_cr"] = (c * v).rolling(20).mean() / 1e7
+    f["vol_ratio_5_20"] = v.rolling(5, min_periods=3).mean() / avg_v20
+    f["turnover_cr"] = (c * v).rolling(20, min_periods=10).mean() / 1e7
 
     obv = (np.sign(c.diff()).fillna(0) * v.fillna(0)).cumsum()
-    f["obv_slope_10"] = (obv - obv.shift(10)) / (v.rolling(10).sum())
+    f["obv_slope_10"] = (obv - obv.shift(10)) / (v.rolling(10, min_periods=5).sum())
 
     raw_mf = tp * v
-    pos = raw_mf.where(tp > tp.shift(), 0).rolling(14).sum()
-    neg = raw_mf.where(tp < tp.shift(), 0).rolling(14).sum()
+    pos = raw_mf.where(tp > tp.shift(), 0).rolling(14, min_periods=7).sum()
+    neg = raw_mf.where(tp < tp.shift(), 0).rolling(14, min_periods=7).sum()
     f["mfi_14"] = 100 - 100 / (1 + pos / neg.replace(0, np.nan))
 
     f["dist_52w_high"] = c / h.rolling(252, min_periods=120).max() - 1
